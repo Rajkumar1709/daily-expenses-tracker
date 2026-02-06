@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* 
+  In Tailwind v4, theme variables are exposed as CSS variables.
+  We can use them directly or use @apply. 
+  For safety during migration, using standard CSS with theme() or variables.
+*/
+
+@layer base {
+
+  html,
+  body,
+  #root {
+    @apply h-full overflow-hidden;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 transition-colors duration-300;
+  }
+}
+
+/* 
+   Dark mode override. 
+   Assuming 'class' strategy or media query.
+   In v4, dark variant works if configured.
+   If using class strategy in JS config, we need to ensure the class is present.
+*/
+:root.dark body {
+  @apply bg-dark-bg text-dark-text;
+}
