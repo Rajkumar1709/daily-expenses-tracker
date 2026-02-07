@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import StorageService from '../services/StorageService';
+import LoadingScreen from '../components/LoadingScreen';
 
 const AuthContext = createContext();
 
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, token, loading, register, login, logout }}>
-            {children}
+            {loading ? <LoadingScreen /> : children}
         </AuthContext.Provider>
     );
 };
