@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import StorageService from '../services/StorageService';
 import AuthContext from '../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
@@ -14,20 +15,21 @@ const Analytics = () => {
 
     const fetchExpenses = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/expenses', {
-                headers: { 'x-auth-token': token }
-            });
-            setExpenses(res.data);
-            processData(res.data);
+            const data = await StorageService.getExpenses();
+            setExpenses(data);
+            processData(data);
         } catch (err) {
             console.error("Error fetching data");
         }
     };
 
     const processData = (data) => {
+        // Filter out income, only show expenses in the breakdown
+        const expenseData = data.filter(item => item.type === 'expense' || !item.type);
+
         const categoryMap = {};
 
-        data.forEach(item => {
+        expenseData.forEach(item => {
             if (categoryMap[item.category]) {
                 categoryMap[item.category] += item.amount;
             } else {

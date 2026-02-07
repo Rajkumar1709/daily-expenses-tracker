@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
 import axios from 'axios';
+import StorageService from '../services/StorageService';
 import AuthContext from '../context/AuthContext';
 import { format, isToday, isYesterday, isSameMonth, parseISO, subMonths } from 'date-fns';
 import { ArrowUpRight, ArrowDownCircle, Filter, ChevronDown, Wallet, X, CreditCard, Check } from 'lucide-react';
@@ -26,8 +27,8 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchExpenses = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/expenses');
-                setExpenses(res.data);
+                const data = await StorageService.getExpenses();
+                setExpenses(data);
             } catch (err) {
                 console.error("Error fetching expenses");
             }

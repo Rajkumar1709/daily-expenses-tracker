@@ -1,64 +1,66 @@
 import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import StorageService from '../services/StorageService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [token, setToken] = useState(localStorage.getItem('expense_tracker_token'));
     const [loading, setLoading] = useState(true);
-
-    // Configure axios defaults
-    if (token) {
-        axios.defaults.headers.common['x-auth-token'] = token;
-    } else {
-        delete axios.defaults.headers.common['x-auth-token'];
-    }
 
     useEffect(() => {
         const loadUser = async () => {
-            if (token) {
-                try {
-                    const res = await axios.get('http://localhost:5000/api/auth/user');
-                    setUser(res.data);
-                } catch (err) {
-                    console.error("Error loading user", err);
-                    localStorage.removeItem('token');
-                    setToken(null);
-                    setUser(null);
-                }
+            // Simulate loading delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (StorageService.isAuthenticated()) {
+                const storedUser = StorageService.getUser();
+                setUser(storedUser);
+                setToken('offline-session-token');
             }
             setLoading(false);
         };
         loadUser();
-    }, [token]);
+    }, []);
 
     const register = async (userData) => {
-        try {
-            const res = await axios.post('http://localhost:5000/api/auth/register', userData);
-            localStorage.setItem('token', res.data.token);
-            setToken(res.data.token);
-            setUser(res.data.user);
-            return { success: true };
-        } catch (err) {
-            return { success: false, msg: err.response?.data?.msg || 'Registration Error' };
-        }
+        // In offline mode, register simply saves the user locally
+        const newUser = {
+            name: userData.name,
+            email: userData.email,
+            id: 'local-user-' + Date.now()
+        };
+
+        StorageService.saveUser(newUser);
+
+        setUser(newUser);
+        setToken('offline-session-token');
+        return { success: true };
     };
 
     const login = async (userData) => {
-        try {
-            const res = await axios.post('http://localhost:5000/api/auth/login', userData);
-            localStorage.setItem('token', res.data.token);
-            setToken(res.data.token);
-            setUser(res.data.user);
+        // Simplified offline login: matches email if user exists
+        const storedUser = StorageService.getUser();
+
+        if (storedUser && storedUser.email === userData.email) {
+            // Re-establish session
+            StorageService.saveUser(storedUser);
+            setUser(storedUser);
+            setToken('offline-session-token');
             return { success: true };
-        } catch (err) {
-            return { success: false, msg: err.response?.data?.msg || 'Login Error' };
+        } else if (!storedUser) {
+            // Allow "login" to act as register if no user found locally (optional UX choice)
+            // But for now, returning error to encourage registration
+            return { success: false, msg: 'No local account found. Please Register.' };
         }
+
+        // Security Note: Offline apps typically don't hash passwords securely 
+        // unless using advanced crypto libraries. We assume device security.
+        return { success: false, msg: 'Invalid credentials' };
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
+        StorageService.clearSession();
         setToken(null);
         setUser(null);
     };

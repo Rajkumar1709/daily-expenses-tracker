@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import StorageService from '../services/StorageService';
 import AuthContext from '../context/AuthContext';
 import { ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
@@ -50,9 +51,7 @@ const AddExpense = () => {
                 date: selectedDate.toISOString()
             };
 
-            await axios.post('http://localhost:5000/api/expenses', submissionData, {
-                headers: { 'x-auth-token': token }
-            });
+            await StorageService.addExpense(submissionData);
             navigate('/');
         } catch (err) {
             console.error("Error adding transaction");
